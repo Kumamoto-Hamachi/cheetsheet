@@ -1,0 +1,195 @@
+Web & Linux study sheet
+
+
+<!-- UNIX % Mac -->
+#パーミッション[permission] 
+	ファイルやディレクトなどに設定されるユーザーやユーザーグループごとのアクセス許諾（アクセス権）を指す。
+	ファイル/ディレクトリの所有者である「Owner」(u)、所有者と同じグループに属するすべてのユーザー「Group」(g)、
+	その他すべてのユーザー「Other」(o)に対して、それぞれ「読み込み」「書き込み」「実行」の権限を与えるかどうかを設定できる。
+	設定する際は主に「755」などの数字が用いられ、左の数字がOwner権限、中央の数字がGroup権限、右の数字がOther権限を意味し、
+	それぞれの桁について、	4：読み込み許可、2：書き込み許可、1：実行・ディレクトリ一覧許可、という数字を足し合わせた値で
+	具体的な権限の内容を指定する。「7」は 4+2+1 ですべての権限を許可された状態、「0」は何の権限もない状態を表す。
+	また、「-rw-r--r--」などの表示も併用され、左端はディレクトリであるか否かの種別（「d」はディレクトリ、「-」はそれ以外）、
+	左から2～4桁目はOwner権限、左から5～7桁目はGroup権限、右3桁はOther権限を表す
+	参考： http://e-words.jp/w/%E3%83%91%E3%83%BC%E3%83%9F%E3%83%83%E3%82%B7%E3%83%A7%E3%83%B3.html
+	#パーミッションの変更 chmod(change mode)
+		chmod [u or g or o] (+ or -)パーミッション設定文字列 対象のパス
+		対象パスにアクセス件を付与、剥奪
+		
+		
+#Linux yum[Yellowdog Update Modified]
+	「yum」とはパッケージの統合管理システムのこと。RPMパッケージをかんりするもので、rpmコマンドを使うより便利。
+	#リポジトリにアップデートがないかチェック
+		yum check-update
+	#リポジといrにアップデート、チェック及び実際にアップデートする
+		yum update
+		#yum update -y
+			Assume that the answer to any question which would be asked is yes.
+	#リポジトリからパッケージをインストールする(依存関係にあるパッケージも自動的に解決してくれる)
+		yum install <pkg>
+	#リポジトリからパッケージを検索する
+		yum search <pkg>
+	#インストールされているパッケージを削除する
+		yum remove <pkg>
+	#インストールされているパッケージの情報を表示する
+		yum info <pkg>
+	#インストールされているパッケージ一覧を表示
+		yum list installed
+	参考
+	https://eng-entrance.com/linux-package-yum
+	https://uxmilk.jp/9173
+
+#httpd[Hypertext Transfer Protocol Daemon]HTTPデーモン 
+	メモリ上に留まって要求に応じて動作する常駐プログラム（スタンドアロンデーモン）の一種で、外部からのHTTP接続を受け付けて
+	要求されたファイルを送信したり、送られたデータを受け取って保存したり、指定されたプログラムを起動したりする。
+	様々なWebサーバが実行ファイル名としてhttpdという名称を採用しており、同じhttpdプログラムでもそれぞれ仕様や機能が異なる。
+	参考
+	http://e-words.jp/w/httpd.html
+	https://weblabo.oscasierra.net/apache/
+
+#systemmd
+	Systemdとは従来のSysVinitやUpstartの代替となるデーモンだ。
+	ただし、Systemdはプロセスの起動だけではなく、プロセスの管理や様々なトリガーによるプロセス起動など、その適用範囲は広範
+	※システム起動がいかなる仕組みによって実現されようが、”
+	　システムを起動するためにやらなければいけないこと”（ネットワークの初期化や必要に応じたプロセス起動など）は変わらない。
+	#Unitユニット
+		Systemdにおける処理の単位
+		#unitの種類 
+			.service プロセスの起動/停止に関する設定
+			http://equj65.net/tech/systemd-boot/
+		
+#systemctlコマンド
+	systemdを操作するコマンドで、サービスの起動や停止、状態確認などを行うことが出来ます。
+	# systemctl コマンド {ユニット名}.service
+		systemctl start[stop]
+		systemctl restart
+		systemctl reload
+		systemctl status
+		systemctl enable[disable] システム自動起動
+		systemctl is-enable
+		systemctl list-unit-files --type=service
+		systemctl daemon-reload
+	参考
+	h	
+	https://qiita.com/shimajiri/items/ae8fe481bea3e9660a0c
+
+#コンパイル
+	
+
+#分割コンパイル
+	ソースプログラムを複数のファイルに分割してコンパイルすること
+	一つのプログラムを複数に分割できる機能が提供されることが多く， そのような各部分のことを一般にはモジュールと呼ぶ
+	(Cではモジュールを翻訳単位と呼ぶ)(IDEでは複数のファイルをまとめてプロジェクトと呼ぶ)
+	ソーステキストが長くなり，一つのソースファイルで作成していると 全体を見通すのが難しい．
+	ほんの一部だけを修正をしたときにも 全体をコンパイルし直さなければならないので時間がかかるようになる
+	プログラムをいくつかの部分に分けて 別々に開発したい、再利用したい
+	
+#makefile
+	Makefileは必要なファイルと各ファイルのコンパイルのコマンド, ファイル間の依存関係を記す. 
+	ソースファイルを分割して大規模なプログラムを作成していると, コマンドでコンパイルするのが面倒である. 
+	また, 一部のソースファイルを書き換えだけなのに全部をコンパイルし直すのは時間の無駄
+	#Makefileの基本構造
+		[作りたいもの]: [材料]
+		(tab)[作り方]
+		
+	#make(メイク)
+		プログラムのビルド作業を自動化するツール。
+		コンパイル、リンク、インストール等のルールを記述したテキストファイル(makefile)に従ってこれらの作業を自動化
+		 Makefile では，ファイルの依存関係を示す必要があります． 
+		 次の行は，ファイル tree を作成するために tree.o と util.o が必要なことを示します．
+		 tree:tree.o util.o
+			cc -o tree tree.o util.o
+		 ターゲット名:必要なファイル 
+			動作定義
+		 
+
+tree: tree.o util.o
+#ビルドとは
+		ソースコードに問題がないか解析し、問題がなければ実行できる形にすること、
+		コンパイル+リンク(ライブラリに関連づけ)
+		参考 https://xtech.nikkei.com/it/members/NBY/techsquare/20021008/1/
+		静的解析 + プリプロセッサ + コンパイラ + リンカ
+		参考 https://proengineer.internous.co.jp/content/columnfeature/6308
+		#静的解析
+			文法や構文の誤りを検出する、つまりバグを見つけるための処理
+		#プリプロセッサの前処理(CやCOBOLなどで)
+			前処理では、定数の数値への置き換えやコメントの削除、マクロの展開などが行われる。
+		#コンピパイラのコンパイル
+			人間が書いたソースコードを機械が読んで分かりやすい言語で書かれたオブジェクトファイル（.oや.objなど）に変換
+		#リンカのリンク
+			最後に各オブジェクトファイルやライブラリのリンクし実行ファイルを完成させる。
+		
+	
+
+<!-- Web全般 -->
+[Dnsmasq]
+	DNSのフォワーダ + DHCP
+[DNSサーバー]
+	#DNS超入門
+	https://www.atmarkit.co.jp/ait/articles/1706/21/news041.html
+	名前解決（Name Resolution）:アドレス変換(名前=>ip)
+	DNSサーバはコンピュータ・ネットワークにおいて、（DNS）の「名前解決」機能が実装されたサーバ
+	DNSは2種類
+	(1)コンテンツサーバ(権威サーバー)機能:ドメイン情報の管理(自らの「ゾーン」（ドメイン名空間）について、情報を管理,問いに回答)
+	(2)リゾルバ機能:依頼された問い合わせに応じて、コンテンツサーバへ必要な問い合わせを行う
+[DHCPサーバー]
+	#DHCP
+	https://beyondjapan.com/blog/2016/03/first-dhcp/
+	DHCP(Dynamic Host Configuration Protocol)
+	TCP/IPネットワークにおいてホストに設定情報を伝達するための仕組み
+	使用するネットワークごとに有効なＩＰアドレスの範囲を設定することが出来ます
+
+<!-- IT全般 -->
+#データの単位
+	#記憶容量の単位
+		bit(ビット) 0,1
+		byte(バイト) = 8b
+		KB(キロバイト) = 2^10B (1024 B)
+		MB(メガバイト) = 2^20B (1024 KB)
+		GB(ギガバイト) = 2^30B (1024 MB)
+		TB(テラバイト)
+		PB(ペタバイト)
+		EB(エクサバイト)
+		ZB(ゼタバイト)
+		YB(ヨタバイト)
+		参考 https://manemichi.com/data-unit
+		https://www.irohabook.com/bit
+	#他の単位
+		bps(1秒間に何ビットの情報を転送できるか)
+		#例 1Gbpsはどのくらい
+		1GBではない。(2^30 / 2^3)B
+		https://thesaibase.com/net/nuro-bit-byte#bps
+		dpi(1inにいくつ点を打てるか)
+	#MIMEタイプ(IANAメディアタイプ)
+		Multipurpose Internet Mail Extensions
+		文書、ファイル、またはバイト列の性質や形式を示す標準
+		https://developer.mozilla.org/ja/docs/Web/HTTP/Basics_of_HTTP/MIME_types
+		#構造
+			タイプ/サブタイプ; [引数=値] 常にこの二つを持つ、引数は任意
+			例 text/plain; charset=UTF-8
+			タイプ：全般的なカテゴリ(例:video, text)
+			サブタイプ:そのMIMEタイプが表す正確なデータの種類を識別します。
+			(例:textの場合、plain, html, calendarなど)
+			
+#菱形継承問題
+	多重継承を伴うオブジェクト指向プログラミング言語において、クラスAを2つのクラスBとCが継承し、
+	BとCの両方をクラスDが継承する際に発生する曖昧さを指す用語
+	https://twitter.com/digitalhimiko/status/1234114666076393473
+	
+#リスコフの置換原則(Liskov substitution principle)
+	置換可能性(substitutability)
+		SがTの派生型であれば、プログラム内でT型のオブジェクトが使われている箇所は
+		全てS型のオブジェクトで置換可能であれ、ということ
+		https://ja.wikipedia.org/wiki/					
+		%E3%83%AA%E3%82%B9%E3%82%B3%E3%83%95%E3%81%AE%E7%BD%AE%E6%8F%9B%E5%8E%9F%E5%89%87
+		
+	
+#Mixin ミキシン
+	OOP サブクラスによって継承されることにより機能を提供し、単体で動作することを意図しないクラス
+	https://ja.wikipedia.org/wiki/Mixin
+
+#バッファ
+	バッファとは、コンピュータ用語としては、入出力処理において入力と処理との間に生じたタイミングのずれを補う目的で、
+	データを一時的に保持するために用意される記憶領域のことである。
+	https://www.weblio.jp/content/%E3%83%90%E3%83%83%E3%83%95%E3%82%A1
+		
