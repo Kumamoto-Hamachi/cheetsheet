@@ -1,0 +1,428 @@
+gitチートシート
+
+----1.Gitのコアコンセプト----
+----2.インストールとセットアップ----
+----3.Gitの仕組みと基本的ワークフロー----
+----4.Githubの操作----
+
+----5.よく使うコマンド----
+
+
+----1.Gitのコアコンセプト----
+
+[Gitのコアコンセプト]
+	Gitはバージョン管理システム[誰が/いつ/何を/なぜ]変更したのか記録する
+	gitはコミット単位に変更履歴を管理(まるまる)スナップショットとして保存している->複数にでの開発のスピードアップ
+
+	ローカルリポジトリ←コミット(スナップショットを記録)
+	↑プル/↓プルリクエスト
+	リモートリポジトリ(Githubなど)←プッシュ
+
+	ワークツリーは作業場/ステージ(index)はコミットの準備場所/リポジトリはスナップショットの置き場
+	
+[構成]
+	***本体***
+	homebrewで入れると,Cellarに入る -> binはここにシンボリックリンクを貼ってる(binはリンク元/本体はCellar) brew --prefix
+	コマンド自体はCellarのしたのverの数字のディレクトリの下のgitから飛んでる->これも同じくリンク
+	/etc/configはシステム全体のconfigの--sysytemオプション,
+	~/.gitconfigは各ユーザーの全体の設定ファイルconfigの--globalオプション(PJに関係なく適用)
+
+[ブランチ]	
+	並行して複数機能を開発
+	コミットオブジェクト(ファイル)の中にparentが書かれている
+	ブランチ名は最新のコミットファイルを示すポインタにすぎない(コミットしたらブランチが示すコミットファイルも変わる)
+	HEADとは自分が作業しているブランチを指し示す(ref:ブランチ名)
+	リポジトリにある普通のブランチはHEADは.git/HEAD ブランチは.git/refに保存
+
+
+[補足]
+	プルで共有リポジトリから個人リポジトリにデータ取り込み
+	プルリクエストで共有リポジトリに取り込んでもらえないかのリクエスト(複数人開発楽)
+	git/リーネス・トーパルズGithub/クリス・ワンストラス
+
+
+
+----2.インストールとセットアップ----
+
+[ユーザー名とemail,editorを登録]
+	git config --global user.name "github user name"
+	git config --global user.email "github@samaple.com"
+	git config --global core.editor 'vim -c "set fenc=utf-8"'
+	git config --list
+	cat ~/.gitconfig //ここに保管されてる
+
+[ssh接続の準備]
+	ssh-keygen -t rsa -b 4096 -C "github登録アドレス"
+	-t[type]鍵のタイプ -b[bits] 鍵の長さ 4096bitがgithub推奨 -C[comment]鍵にコメント
+	-> Enter file in which to save the key (/Users/hoge/.ssh/id_rsa): /Users/hoge/.ssh/id_rsa_github
+	-> パスフレーズ設定
+	-> 生成された秘密鍵のパーミッションを600(-rw-------)に変更
+	
+
+
+----3.Gitの基本的ワークフロー----
+
+[Gitの裏側で起こっていること]
+	git add sample.txt
+	git commit sample.txt
+
+	---add/commitの裏側---
+
+	*add
+	blobオブジェクト作成
+	インデックスにファイル名とファイル構造追記/上書
+	*commit
+	ツリーオブジェクト作成
+	コミットオブジェクト作成
+	ブランチの先頭を示すリファレンス書き換え[.git/HEADファイル->refs/heads/masterに最新コミットのID] 
+	->リポジトリにある普通のブランチはHEADは.git/HEAD ブランチは.git/refに保存
+	->Gitオブジェクト[.git/objects] = 圧縮ファイル(blobオブジェクト) + ツリーファイル + コミットファイル
+	->find . git/object -type fでblobオブジェクト/ツリーオブジェクト/コミットオブジェクトが見つかる
+
+	---ステージングエリアに保存されるもの---
+
+	*インデックスファイル[.git/index]上書きされていくコミットの準備計画書
+	->ファイルモード(パーミッション)/blobオブジェクトID/ステージ(1,2,3 num for merge conflict)/ファイルパス(sample.txt)
+	->バイナリファイルにパーミッション/オブジェクトID/ファイルパス
+	->ツリーの鋳型/(blobオブジェクトだけでは無理な)ファイルの構造と名前を保持する役割
+	->git ls-files --stageで.git/indexの中身拝見
+	100644 67dcebe5e80cb4513b614624763ce08cf3346d8f 0       sample.txt
+
+	---ローカルリポジトリに保存されるもの---	
+
+	*blobオブジェクト[.git/index]追加されていく圧縮ファイル
+	->(zlibライブラリで圧縮された)ファイルの中身そのもの
+	->ファイル名はblobオブジェクトID
+	->blobオブジェクトIDはヘッダー(ファイル内容のメタ情報)とファイル内容をSHA-1で40文字
+	  (先頭2文字がサブディレ)の英数字にしたハッシュID
+	->git cat-file -p blobオブジェクトIDで圧縮前の内容確認
+	->git hash-object greetingでハッシュIDを確認
+
+
+	*ツリーオブジェクト[.git/object]追加されていくツリー構造を書いたファイル
+	->ファイルモード(パーミッション)/オブジェクトタイプ/オブジェクトID/ファイルパス
+	->blobオブジェクトか他のtreeオブジェクト(もしくはその両方を保持)
+	->git cat-flie -p treeオブジェクト名で中身見れる
+	100644 blob 67dcebe5e80cb4513b614624763ce08cf3346d8f    sample.txt
+	040000 tree 94d5c7eab249212c58445ace5acadf10ed991e0c    src
+
+	*コミットオブジェクト[.git/object]	
+	->コミットが作成された時点のトップレベルのツリー/親(直前の)コミット/作者とコミッターの情報/空行/コミットメッセージ
+	->誰がいつなんのために,がわかる
+	->git cat-file -p HEAD[もしくは最新コミットオブジェクト名]で中身見れる
+	tree 9a4956b912f7ea59f0efbdb4a5c4d18a19aee9bb
+	parent ef56b8952e72e3be4b06f61ecef53a9d282a4568
+	author Harry <harry@author.co.jp> 1502608263 +0900
+	committer Harry <harry@author.co.jp> 1502608263 +0900
+
+	add directory
+
+
+[PJの開始/ローカルリポジトリを作成]
+	git init
+	.gitディレクトリが出来る
+	->(1)リポジトリ(blobオブジェクト/ツリーファイル/コミットファイル)(2)インデックスファイル(3)設定ファイル
+	HEAD/branches/config(設定ファイル)/description/hooks/info/objetcs(リポジトリ本体)/refs 
+
+[GitHub上にあるPJから始める]
+	git clone <リポジトリ名(リポジトリのURL> <保存先ディレクトリパス>	 
+	->リモートリポジトリの「ファイル」がワーキングツリーに
+	->「.gitディレクトリ」がコピーされる
+	->GitHubの「Clone or download」を使用
+
+[ステージング]
+	git add 
+	.git/indexと圧縮ファイル(blobオブジェクト)が出来る
+
+[色々な変更をコミット]
+	*ファイルの新規作成*
+	git status -sb //addされてない-commitされてない-Git管理されておらず.gitigonoreにも載っていない(short表示 branchも見せて)
+	git commit -v
+	*ファイルの削除*
+    git rm [-r][--cached] //ステージングエリア(インデックス)とワークツリー(実際の作業場所)からファイルを削除 
+	git commit -v
+	*複数ファイルの変更*
+	git add . //全てをステージングに
+	git commit -v
+
+[リポジトリにプッシュ]
+	Githubでnew repository
+	(1)既存のローカルリポジトリをプッシュ(2)新規のローカルリポジトリを作成しプッシュ
+	*既存の場合*
+	git remote add orgin https://github.com/hoge_user/fuga.git //リモートリポジトリをoriginという名前で登録
+	git push -u origin master //origin(リモートリポジトリ)のmasterブランチにプッシュ
+
+
+[現在の状況を確認]
+	git status
+	On branch master //ブランチはマスター
+	Your branch is ahead of 'orgin/master' by 4commits //共有リポジトリ(origin)より4つ分コミットが前にある
+	nothing to commit, working tree is clean //最新のコミットから変更ないよ
+	Changes not staged for commit
+	Changes to be committed
+		modified hoge.php
+
+[変更履歴を確認]
+	git log --oneline -p [index.html] --decorate//ハッシュ値-誰が-いつ-どんな
+	commit_id/author/date/comment
+
+[変更差分を確認]
+	git diff HEAD --cached
+	HEADローカルリポジトリとワーキングツリー比較
+	--cachedローカルリポジトリとステージ
+	HEAD ..リモート名/ブランチ名
+
+
+[バージョン管理化から外す]
+	.gitignore[自動生成されるファイル/pwなど]
+	ルートディレクトリを指定/root.html
+	ディレクトリ以下全てdir/
+	
+[コマンドにエイリアスを付ける]
+	git config --global alias.[短縮コマンド] [コマンド]
+	git config --global alias.ci commit
+	git config --global alias.st status
+	git config --global alias.br branch
+	git config --global alias.co checkout
+
+
+[ファイルへの変更を取り消す]
+	ワークツリーの状態をステージと同じ状態に
+	git checkout -- <ファイル名>
+	git checkout -- <ディレクトリ名>
+	git checkout -- .
+
+
+[addを取り消す]
+	git reset HEAD <ファイル名>
+	git reset HEAD <ディレクトリ名>
+	git reset HEAD .
+	->上のコードはワークツリーのファイルには変更及ぼさない(checkout見るように)
+	今自分がいるブランチの最新のコミット=HEAD
+
+[直前のコミットをやり直し]
+	git add 
+	git commit --amend
+	※絶対にpushしたやつでこれをやるな
+
+[ブランチの新規追加]
+	git branch <ブランチ名>
+
+[ブランチの一覧表示]
+	git branch 
+	git branch  -a
+
+[ブランチを切り替える]
+	git checkout <既存ブランチ名>
+	git checkout -b <新規ブランチ名>
+
+
+[ブランチの名前を変更]
+	git branch -m <ブランチ名> //自分が今作業しているbrの名前変更
+
+[ブランチの名前を削除]
+	git branch -d <ブランチ名> //masterにマージされてないものは削除しない
+	git branch -D <ブランチ名> //強制削除
+
+[ブランチの利用の流れ]
+	masterブランチをリリース用ブランチに
+	開発はトピックブランチを作成して進める
+
+[リモートブランチについて]
+	
+
+
+[変更をマージする]
+	git merge <ブランチ名>
+	git merge <リモート名/ブランチ名>
+	3種のmerge(fast foward/auto merge(merge commitという新しいコミット)/conflict)
+
+[コンフリクトとは]
+	複数人が同じ箇所を別々に変更してmergeしたときにどちらを優先すればいいかわからないとき
+	<<<<<< HEAD
+	<p>headの修正</p>
+	=======
+	<p>featureの修正</p>
+	>>>>>> feature
+	->解決策：最終的なファイル内容に書き換え,add,commit
+
+[コンフリクトを避けるには]
+	複数人で同じファイルを変更しない
+	pullやmergeをする前に変更中の状態をなくしておく(commitやstashの活用)
+
+[GitHubにプッシュ]	
+
+----4.Githubの操作----
+
+[GitHubにプッシュ]	
+	git remote add origin https://github.com/usr/repo.git //originがリモートリポジトリになる
+	git push -u origin master 
+
+[リモートを表示]
+	git remote 
+	git remote -v //fetchとpushで違うのも登録できるから
+	git remote show <リモート名> //更に詳しく
+
+[リモートリポジトリを追加する]
+	git remote add <リモート名>(既に登録済のorigin以外の名前) <リモートURL>
+
+[リモートから情報を取得]
+	フェッチ/fetch
+	fetchはリモートからローカルに(でもワークツリーにはデータ来ない！)
+	git fetch <リモート名>
+
+	git pull <リモート名> <ブランチ名> 
+	pullはリモートからローカルに引っ張ってしかもワークツリーにマージもしてくれる。
+
+[fetch/pullの使い分け]
+	基本はfetchで
+	pull引数指定して取ってきても今いるブランチにマージされてしまう！
+	ex)今master brにいて git pull origin hogeとするとorign/hogeはmasterとブランチされてしまう
+
+[リモートを変更/削除]
+	git remote rename <旧リモート名> <新リモート名>
+	git remote rm <リモート名>
+
+[GitHubの画面を確認]	
+	your_profile->リポジトリ
+	edit/create_new_file(使わない)/commits(リポジトリ全体のコミットの履歴確認)
+	リポジトリ->各ファイル
+	行数をクリックでurlに反映
+	Raw(生ファイル-コピーに便利)/Blame(誰がいつなんのためにしたか)/History(このファイルの変更履歴を見る)
+
+[プルリクエストをする/pull requestを使うj
+	(1)masterブランチを最新に(2)ブランチを作成(3)ファイルを変更/commit(4)Githubへpush(5)pull request
+	GitHubの該当のリポジトリの"Pull request"のnew pull requestボタン
+	base:master(基盤となるブランチ) compare:branch名(今回プルリクエストする側のブランチ)
+	Reviewsを登録
+
+[プルリクエストを出されたら]
+	GitHubの該当のリポジトリの"Pull request"のfiles changedをクリック
+	変更箇所をプラスボタンを押してコメント,最終的にapproveすることで取り込まれる
+
+	
+
+----5.よく使うコマンド----
+
+[確認系]
+git diff
+	ローカル(ワーキングツリー)とステージとの差分[addしてないものを表示(新規追加ファイルは表示されない)]
+git diff --cached
+git diff HEAD
+	ワークツリーととコミットとの差分を確認
+
+
+git status -sbz
+	どこのブランチにいるか/共有からコミットどれだけ進んでいるか
+	addされてない/commitされてない/Git管理でない(かつ.gitigonreに載ってない)ファイルを表示
+	-s省略-bブランチ表示-z改行(LF→NUL)なくし
+
+git log --oneline -p [index.html] -n 3
+--oneline一行で -p (ファイル)の差分確認 -n 数値 表示されるlog数を限定
+
+[ブランチ操作]
+git branch
+	ブランチ一覧表示
+git branch ブランチ名
+	ブランチ作成
+git checkout <branch>
+	ブランチ切り替え
+git merge <branch>
+	ブランチをマージ
+
+[コミット系]
+git commit -v
+	-v(--verbose)冗長にcommitで変更箇所を見れる
+
+git commit --ammend -m "コミットメッセージ変更" --no--edit
+	--ammend共有リポジトリにpushする前の直前コミットを修正
+	-m メッセのみ変更の時
+	--no--edit 直前のコミットメッセージのままコミット修正
+
+[削除コミット/commit ]
+git rm [ファイル名]
+	コミットしてしまったファイルを管理から外す
+git rm -r [ディレクトリ名]
+	ディレクトリも一緒に削除
+git rm --cached [ファイル名] + .gitignoreファイルに追記
+	ローカルにファイルは残すがgitの管理下からは外す場合
+->最初から.gitignoreに入れておくのがベスト
+
+[削除コミットを戻す]
+git reset HEAD hoge.txt //ローカルリポ上からはまだ消えたまま
+git checkout hoge.txt //ローカルリポ上でも戻る
+
+[移動コミット/commit]
+git mv
+(1)mv <旧ファイル名> <新ファイル名> (2)git mr <旧ファイル名> (3)git add <新ファイル>の3つと同じ
+
+[マージ系]
+git merge --abort
+マージしたときにコンフリクト起きたので取り消し
+
+[GitHubを新規追加]
+git remote add origin https://github.com/user/ originというショートカットでurlのリポジトリを登録
+git push -u origin master git push<リポジトリ名><ブランチ名> リポジトリ(GitHub)に送信する -uとすれば次回以降origin/masterを省略可
+ 
+
+
+
+# 変更履歴を確認する
+~ $ git log
+commit 3b4f3aafe(ハッシュ値)
+Author: Kumamoto <onioni9999nagare@gmail.com>
+Date Fri Mar 6 21:15:58 2020 +0900
+commit message
+
+# 1行表示
+~ $ git log --oneline
+
+# 各コミットのdiffを表示する
+~ $ git log -p [file名]
+
+# 表示するログ数を指定する
+~ $ git log -n [log数]
+
+
+# ステージとの差分をを確認する
+~ $ git diff
+
+# ステージとコミットとの差分を確認
+~ $ git diff HEAD
+
+#addされた分のdiffだけ見たい
+~ $ git diff --staged
+
+
+# リモートリポジトリを登録
+~ $ git remote add origin https://github.com/user/repo.git
+今後はoriginという名前でGitHubリポジトリにアクセス出来る
+
+# リモートリポジトリへ送信
+~ $ git push origin master
+例えば、リモートのmasterブランチではなく、featureブランチにpushしたい場合は、
+git push origin featureとすれば良い
+
+# GitHubの画面の確認
+# GitHub(リモート)上で新規にファイル作成
+Create new fileを選択(実際の開発ではローカルで新規にファイル作成、pushするので必要なし)
+# 生ファイルを表示
+Raw
+# この変更を"誰が","いつ","何のために"したのか確認
+Blame
+# このファイルの変更履歴を見たい
+History
+# 今までのコミット(変更)の履歴を見たい
+ホームの[number] commitsをクリック
+
+# gitで管理したくないファイルを管理下から外す
+自動生成されるファイル、pwが記載されているファイルはは.gitignoreにぶち込もう
+
+# コミットしてしまったファイルを管理から外す
+~ $ git rm [ファイル名]
+# ディレクトリも一緒に削除
+~ $ git rm -r [ディレクトリ名]
+# ローカルにファイルは残すがgitの管理下からは外す場合
+~ $ git rm --cached [ファイル名] + .gitignoreファイルに追記
+
+
