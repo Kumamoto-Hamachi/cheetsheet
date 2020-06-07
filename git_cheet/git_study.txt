@@ -255,7 +255,10 @@ gitチートシート
 ----4.Githubの操作----
 
 [GitHubにプッシュ]	
-	git remote add origin https://github.com/usr/repo.git //originがリモートリポジトリになる
+	Githubなら書くリポジトリのclone or downloadから
+	->git@github.com:Kumamoto-Hamachi/cheetsheet.git
+	ただしgithub.comの部分は適宜~/.ssh/configのHost名にすること
+	git remote add origin git@github:Kumamoto-Hamachi/cheetsheet.git //originがリモートリポジトリになる
 	git push -u origin master 
 
 [リモートを表示]
@@ -289,6 +292,7 @@ gitチートシート
 	リポジトリ->各ファイル
 	行数をクリックでurlに反映
 	Raw(生ファイル-コピーに便利)/Blame(誰がいつなんのためにしたか)/History(このファイルの変更履歴を見る)
+	Create new fileを選択(実際の開発ではローカルで新規にファイル作成、pushするので必要なし)
 
 [プルリクエストをする/pull requestを使うj
 	(1)masterブランチを最新に(2)ブランチを作成(3)ファイルを変更/commit(4)Githubへpush(5)pull request
@@ -364,65 +368,3 @@ git merge --abort
 git remote add origin https://github.com/user/ originというショートカットでurlのリポジトリを登録
 git push -u origin master git push<リポジトリ名><ブランチ名> リポジトリ(GitHub)に送信する -uとすれば次回以降origin/masterを省略可
  
-
-
-
-# 変更履歴を確認する
-~ $ git log
-commit 3b4f3aafe(ハッシュ値)
-Author: Kumamoto <onioni9999nagare@gmail.com>
-Date Fri Mar 6 21:15:58 2020 +0900
-commit message
-
-# 1行表示
-~ $ git log --oneline
-
-# 各コミットのdiffを表示する
-~ $ git log -p [file名]
-
-# 表示するログ数を指定する
-~ $ git log -n [log数]
-
-
-# ステージとの差分をを確認する
-~ $ git diff
-
-# ステージとコミットとの差分を確認
-~ $ git diff HEAD
-
-#addされた分のdiffだけ見たい
-~ $ git diff --staged
-
-
-# リモートリポジトリを登録
-~ $ git remote add origin https://github.com/user/repo.git
-今後はoriginという名前でGitHubリポジトリにアクセス出来る
-
-# リモートリポジトリへ送信
-~ $ git push origin master
-例えば、リモートのmasterブランチではなく、featureブランチにpushしたい場合は、
-git push origin featureとすれば良い
-
-# GitHubの画面の確認
-# GitHub(リモート)上で新規にファイル作成
-Create new fileを選択(実際の開発ではローカルで新規にファイル作成、pushするので必要なし)
-# 生ファイルを表示
-Raw
-# この変更を"誰が","いつ","何のために"したのか確認
-Blame
-# このファイルの変更履歴を見たい
-History
-# 今までのコミット(変更)の履歴を見たい
-ホームの[number] commitsをクリック
-
-# gitで管理したくないファイルを管理下から外す
-自動生成されるファイル、pwが記載されているファイルはは.gitignoreにぶち込もう
-
-# コミットしてしまったファイルを管理から外す
-~ $ git rm [ファイル名]
-# ディレクトリも一緒に削除
-~ $ git rm -r [ディレクトリ名]
-# ローカルにファイルは残すがgitの管理下からは外す場合
-~ $ git rm --cached [ファイル名] + .gitignoreファイルに追記
-
-
