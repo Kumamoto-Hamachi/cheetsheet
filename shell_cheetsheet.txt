@@ -1,0 +1,14 @@
+shell_cheetsheet
+
+#TODO
+	ブロック
+	https://ja.wikipedia.org/wiki/%E3%83%96%E3%83%AD%E3%83%83%E3%82%AF_(%E3%83%87%E3%83%BC%E3%82%BF)
+	
+
+#ファイルサイズを表示
+	$ ls -lh -s
+	-l 長方形でファイルとディレクトリをのリストを表示、それぞれのサイズをバイト単位で表示
+	-h ファイルサイズが大きい場合、キロ/メガ/ギガ/テラで表示
+	-s ファイルとディレクトリのリストを表示し、それぞれのサイズをブロック単位で表示
+	https://docs.oracle.com/cd/E19253-01/819-0379/sysresdiskuse-3/index.html
+
